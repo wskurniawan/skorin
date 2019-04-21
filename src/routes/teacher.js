@@ -1,8 +1,10 @@
 const Teacher = require('express').Router();
 const shortId = require('shortid');
+const axios = require('axios').default;
 
 const InfoSoal = require('./../model/info-soal');
 const Soal = require('./../model/soal');
+const Jawaban = require('./../model/jawaban');
 
 const account = require('./../account');
 
@@ -83,10 +85,82 @@ Teacher.post('/:idSoal/add-soal', function(req, res, next){
    });
 });
 
-Teacher.get('/:idSoal/test-result', function(req, res, next){
+Teacher.get('/:idSoal/test-result', async function(req, res, next){
    var idSoal = req.params.idSoal;
+   var listSubmission = [];
 
-   res.send(idSoal);
+   try {
+      var listJawaban = await Jawaban.find({ id_soal: idSoal });
+      var infoUjian = await InfoSoal.findOne({ id: idSoal });
+
+      await listJawaban.map(async function(item, index){
+         var user = await account.getDetail(listJawaban[index].id_user)
+         listSubmission.push({
+            user: user,
+            jawaban: item
+         });
+      });
+   } catch (error) {
+      return next(error);
+   }
+
+   console.log(listSubmission);
+   res.render('teacher-test-result', { infoUjian: infoUjian, listSubmission: listSubmission });
+});
+
+Teacher.get('/:idSoal/get-result', async function(req, res, next){
+   var idSoal = req.params.idSoal;
+   var listJawabanBenar = [];
+   var listJawabanSiswa = [];
+
+   //https://skorin.herokuapp.com/koreksi/
+   try{
+      var soal = await Soal.find({ parent: idSoal });
+      var listSubmission = await Jawaban.find({ id_soal: idSoal });
+
+      await soal.map((item) => {
+         listJawabanBenar.push(item.a);
+      });
+
+      await listSubmission.map((item) => {
+         listJawabanSiswa.push({
+            nama: item.id_user,
+            jawaban: item.jawaban
+         });
+      });
+   }catch(error){
+      return next(error);
+   }
+   
+   var requestBody = {
+      jawaban_benar: listJawabanBenar,
+      jawaban_siswa: listJawabanSiswa
+   };
+
+   console.log(requestBody);
+   try {
+      var result = await axios.post('https://skorin.herokuapp.com/koreksi/', requestBody);
+      var hasil = result.data;
+
+      console.log(result);
+
+      await hasil.map(async function(item){
+         console.log(item);
+         var update = { 
+            benar: item.skor_jawaban[0].total_jawaban_benar,
+            salah: item.skor_jawaban[0].total_jawaban_salah,
+            skor: item.skor_jawaban[0].final_score,
+            isKoreksi: true
+         }
+
+         await Jawaban.updateOne({ id_user: item.siswa, id_soal: idSoal }, { $set: update })
+      });
+   } catch (error) {
+      return next(error);
+   }
+
+   res.redirect(req.baseUrl + '/' + idSoal + '/test-result');
+   //res.send(result.data);
 });
 
 module.exports = Teacher;
