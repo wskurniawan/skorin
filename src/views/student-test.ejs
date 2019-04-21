@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <title><%= infoUjian.title %></title>
+
+   <link rel="stylesheet" href="/static/styles/uikit.min.css">
+   <link rel="stylesheet" href="/static/styles/custom.css">
+</head>
+<body class="uk-container" style="padding-top: 42px;">
+   <ul class="uk-breadcrumb">
+      <li><a href="/student/dashboard">Home</a></li>
+      <li><span><%= infoUjian.id %></span></li>
+   </ul>
+
+   <h3 style="text-align: center"><%= infoUjian.title %></h3>
+
+   <div style="margin-top: 42px;">
+      <form method="POST" action="/student/<%= infoUjian.id %>/submit-test">
+         <% listSoal.forEach(function(item, index){ %>
+         <div class="uk-flex uk-flex-center" style="margin-top: 24px;">
+            <div class="uk-card uk-card-default uk-width-2-3@l uk-width-1-1@s">
+               <h4 style="padding: 12px;"><%= index + 1 %>. <%= item.q %></h4>
+               <input class="uk-input" placeholder="jawaban" name="<%= index %>">
+            </div>
+         </div>
+         <% }); %>
+
+         <div class="uk-flex uk-flex-center" style="margin-top: 24px; margin-bottom: 24px;">
+            <button type="submit" class="uk-button uk-button-default">Selesai</button>
+         </div>
+      </form>
+      
+   </div>
+
+   <script src="/static/scripts/uikit.min.js"></script>
+</body>
+</html>
