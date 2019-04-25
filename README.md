@@ -3,3 +3,5 @@ How to run.
 2. put db URI in config.js
 3. npm install
 4. npm start
+
+link demo https://youtu.be/Q6UwTvh9oVk
